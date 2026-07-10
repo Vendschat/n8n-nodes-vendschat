@@ -1,24 +1,23 @@
 import type {
 	IDataObject,
 	IHookFunctions,
-	IHttpRequestMethods,
+	ILoadOptionsFunctions,
 	INodeType,
 	INodeTypeDescription,
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
-import {
-	displayNameNewMessage,
-	nodeDescriptionShortNewMessage,
-	nodeSubtitleVendsChat,
-	vendsChatNodeCodex,
-} from '../../lib/productCopy';
+import { NodeOperationError } from 'n8n-workflow';
 import { WEBHOOK_EVENT_OPTIONS } from '../../lib/events';
+import type { VendsChatCredentials } from '../../lib/http';
+import { getVendsChatAuthHeaders, normalizeBaseUrl } from '../../lib/http';
+import { vendsChatIntegrationRequest } from '../../lib/integrationApi';
 import {
-	getVendsChatAuthHeaders,
-	normalizeBaseUrl,
-	type VendsChatCredentials,
-} from '../../lib/http';
+	descriptionTrigger,
+	displayNameTrigger,
+	subtitleTrigger,
+} from '../../lib/productCopy';
+import { vendsChatCodex } from '../../lib/vendsChatCodex';
 
 type SubscriptionStaticData = {
 	subscriptionId?: string;
@@ -56,7 +55,10 @@ async function registerWebhook(this: IHookFunctions): Promise<boolean> {
 
 	const subscriptionId = response.id;
 	if (subscriptionId === undefined || subscriptionId === null) {
-		throw new Error('VendsChat did not return a webhook subscription id');
+		throw new NodeOperationError(
+			this.getNode(),
+			'Vendschat did not return a webhook subscription id',
+		);
 	}
 
 	const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
@@ -85,77 +87,74 @@ async function unregisterWebhook(this: IHookFunctions): Promise<boolean> {
 	return true;
 }
 
-export class VendsChatNewMessageTrigger implements INodeType {
+export class VendsChatTrigger implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: displayNameNewMessage,
-		name: 'vendsChatNewMessageTrigger',
+		displayName: displayNameTrigger,
+		name: 'vendsChatTrigger',
 		icon: 'file:vendschat.svg',
 		group: ['trigger'],
 		version: 1,
-		description: nodeDescriptionShortNewMessage,
-		subtitle: nodeSubtitleVendsChat,
-		defaults: {
-			name: displayNameNewMessage,
-		},
+		subtitle: subtitleTrigger,
+		description: descriptionTrigger,
+		defaults: { name: displayNameTrigger },
 		inputs: [],
 		outputs: ['main'],
-		credentials: [
-			{
-				name: 'vendsChatApi',
-				required: true,
-			},
-		],
+		credentials: [{ name: 'vendsChatApi', required: true }],
 		webhooks: [
 			{
 				name: 'default',
-				httpMethod: '={{$parameter["httpMethod"]}}' as IHttpRequestMethods,
-				responseMode: '={{$parameter["responseMode"]}}',
+				httpMethod: 'POST',
+				responseMode: 'onReceived',
 				path: 'vendschat',
 				isFullPath: false,
 			},
 		],
 		properties: [
 			{
+				// "Events" displayName is required for n8n to group trigger under the Vendschat app tile.
+				// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options
 				displayName: 'Events',
 				name: 'events',
 				type: 'multiOptions',
-				options: WEBHOOK_EVENT_OPTIONS,
+				typeOptions: { loadOptionsMethod: 'getEvents' },
 				default: ['incoming.vendschat.messages'],
 				required: true,
+				// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options
 				description:
-					'VendsChat events that should trigger this workflow. Requires Growth or Advanced plan.',
-			},
-			{
-				displayName: 'HTTP Method',
-				name: 'httpMethod',
-				type: 'options',
-				options: [
-					{ name: 'POST', value: 'POST' },
-					{ name: 'PUT', value: 'PUT' },
-				],
-				default: 'POST',
-				description: 'HTTP method VendsChat should use when calling this webhook (usually POST)',
-			},
-			{
-				displayName: 'Respond',
-				name: 'responseMode',
-				type: 'options',
-				options: [
-					{
-						name: 'Immediately',
-						value: 'onReceived',
-						description: 'Respond as soon as the request is received',
-					},
-					{
-						name: 'When Last Node Finishes',
-						value: 'lastNode',
-						description: 'After the last node in the workflow finishes',
-					},
-				],
-				default: 'onReceived',
+					'Select one or more events. Vendschat will POST matching payloads when the workflow is active.',
 			},
 		],
-		codex: vendsChatNodeCodex,
+		codex: vendsChatCodex,
+	};
+
+	methods = {
+		loadOptions: {
+			async getEvents(this: ILoadOptionsFunctions) {
+				try {
+					const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
+					const res = await vendsChatIntegrationRequest(
+						this,
+						cred,
+						'/integrations/webhooks/events',
+					);
+					const events = (res.events as IDataObject[]) ?? [];
+					if (events.length > 0) {
+						return events.map((event) => ({
+							name: String(event.label ?? event.type),
+							value: String(event.type),
+							description: event.description ? String(event.description) : undefined,
+						}));
+					}
+				} catch {
+					// Fall back to bundled catalog when credentials are unavailable.
+				}
+
+				return WEBHOOK_EVENT_OPTIONS.map((event) => ({
+					name: event.name,
+					value: event.value,
+				}));
+			},
+		},
 	};
 
 	webhookMethods = {
@@ -172,6 +171,7 @@ export class VendsChatNewMessageTrigger implements INodeType {
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
 		const req = this.getRequestObject();
+
 		if (cred.webhookSecret) {
 			const expected = String(cred.webhookSecret);
 			const provided =
@@ -208,7 +208,7 @@ export class VendsChatNewMessageTrigger implements INodeType {
 						? (parsed as IDataObject)
 						: { data: parsed as IDataObject };
 			} catch {
-				data = { raw: req.body as string };
+				data = { raw: req.body };
 			}
 		} else if (Buffer.isBuffer(req.body)) {
 			try {

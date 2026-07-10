@@ -4,7 +4,7 @@ const DEFAULT_BASE = 'https://api.vendschat.com/v1';
 
 export class VendsChatApi implements ICredentialType {
 	name = 'vendsChatApi';
-	displayName = 'VendsChat API';
+	displayName = 'Vendschat API';
 	icon = 'file:vendschat.svg' as const;
 	documentationUrl = 'https://docs.vendschat.com/docs/auth';
 	properties: INodeProperties[] = [
@@ -14,7 +14,7 @@ export class VendsChatApi implements ICredentialType {
 			type: 'string',
 			default: DEFAULT_BASE,
 			placeholder: DEFAULT_BASE,
-			description: 'VendsChat API base path (e.g. https://api.vendschat.com/v1).',
+			description: 'Vendschat API base path (e.g. https://api.vendschat.com/v1).',
 		},
 		{
 			displayName: 'API Key',

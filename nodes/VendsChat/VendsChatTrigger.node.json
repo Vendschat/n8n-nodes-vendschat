@@ -1,11 +1,9 @@
 {
-	"node": "n8n-nodes-vendschat",
+	"node": "n8n-nodes-vendschat.vendsChatTrigger",
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
-	"categories": ["Core Nodes", "Communication"],
-	"subcategories": {
-		"Core Nodes": ["Helpers"]
-	},
+	"categories": ["Communication"],
+	"alias": ["Vendschat", "vendschat", "whatsapp", "instagram", "messenger"],
 	"resources": {
 		"credentialDocumentation": [
 			{

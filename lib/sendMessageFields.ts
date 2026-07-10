@@ -1,7 +1,55 @@
 import type { INodeProperties } from 'n8n-workflow';
-import { WINDOW_CHECK_HELP } from './integrationApi';
+import {
+	contactFields,
+	contactIdentifierOperations,
+	contactOperationOptions,
+} from './contactFields';
+
+const WINDOW_NOTICE =
+	'Session messages on WhatsApp, Messenger, and Instagram only work inside the 24-hour customer service window. Use a WhatsApp Template outside the window.';
+
+function whenSendMessage(
+	show: Record<string, (string | number | boolean)[]>,
+): INodeProperties['displayOptions'] {
+	return { show: { operation: ['sendMessage'], ...show } };
+}
+
+function whenIdentifier(
+	show: Record<string, (string | number | boolean)[]> = {},
+): INodeProperties['displayOptions'] {
+	return {
+		show: {
+			operation: ['sendMessage', ...contactIdentifierOperations],
+			...show,
+		},
+	};
+}
 
 export const sendMessageFields: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		options: [
+			{
+				name: 'Send Message',
+				value: 'sendMessage',
+				description: 'Send a WhatsApp, Instagram, or Messenger message',
+				action: 'Send Message',
+			},
+			...contactOperationOptions,
+		],
+		default: 'sendMessage',
+		required: true,
+	},
+	{
+		displayName: WINDOW_NOTICE,
+		name: 'windowNotice',
+		type: 'notice',
+		default: '',
+		displayOptions: whenSendMessage({}),
+	},
 	{
 		displayName: 'Identifier Type',
 		name: 'identifierType',
@@ -13,6 +61,7 @@ export const sendMessageFields: INodeProperties[] = [
 		],
 		default: 'phone_number',
 		required: true,
+		displayOptions: whenIdentifier(),
 	},
 	{
 		displayName: 'Identifier Value',
@@ -20,6 +69,8 @@ export const sendMessageFields: INodeProperties[] = [
 		type: 'string',
 		default: '',
 		required: true,
+		description: 'Contact ID, email address, or phone number in E.164 format.',
+		displayOptions: whenIdentifier(),
 	},
 	{
 		displayName: 'Channel Type',
@@ -31,13 +82,13 @@ export const sendMessageFields: INodeProperties[] = [
 		],
 		default: 'last_interacted',
 		required: true,
-		description: WINDOW_CHECK_HELP,
+		displayOptions: whenSendMessage({}),
 	},
 	{
 		displayName: 'Message Format',
 		name: 'contentMode',
 		type: 'options',
-		displayOptions: { show: { channelMode: ['last_interacted'] } },
+		displayOptions: whenSendMessage({ channelMode: ['last_interacted'] }),
 		options: [
 			{ name: 'Text', value: 'text' },
 			{ name: 'Attachment', value: 'attachment' },
@@ -50,40 +101,70 @@ export const sendMessageFields: INodeProperties[] = [
 		name: 'text',
 		type: 'string',
 		typeOptions: { rows: 4 },
-		displayOptions: {
-			show: {
-				channelMode: ['last_interacted'],
-				contentMode: ['text'],
-			},
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['last_interacted'],
+			contentMode: ['text'],
+		}),
 		default: '',
 		required: true,
-		description: WINDOW_CHECK_HELP,
 	},
 	{
 		displayName: 'Attachment Type',
 		name: 'attachmentType',
 		type: 'options',
-		displayOptions: {
-			show: { channelMode: ['last_interacted'], contentMode: ['attachment'] },
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['last_interacted'],
+			contentMode: ['attachment'],
+		}),
 		options: [
 			{ name: 'Image', value: 'image' },
 			{ name: 'Video', value: 'video' },
 			{ name: 'Audio', value: 'audio' },
-			{ name: 'File (Document)', value: 'document' },
+			{ name: 'Document', value: 'document' },
 		],
 		default: 'image',
 		required: true,
 	},
 	{
+		displayName: 'Attachment URL',
+		name: 'mediaUrl',
+		type: 'string',
+		displayOptions: whenSendMessage({
+			channelMode: ['last_interacted'],
+			contentMode: ['attachment'],
+		}),
+		default: '',
+		required: true,
+	},
+	{
+		displayName: 'Caption',
+		name: 'caption',
+		type: 'string',
+		displayOptions: whenSendMessage({
+			channelMode: ['last_interacted'],
+			contentMode: ['attachment'],
+			attachmentType: ['image', 'video', 'document'],
+		}),
+		default: '',
+	},
+	{
+		displayName: 'File Name',
+		name: 'filename',
+		type: 'string',
+		displayOptions: whenSendMessage({
+			channelMode: ['last_interacted'],
+			contentMode: ['attachment'],
+			attachmentType: ['document'],
+		}),
+		default: '',
+		description: 'e.g. invoice.pdf',
+	},
+	{
 		displayName: 'Channel Name or ID',
 		name: 'channelId',
 		type: 'options',
-		displayOptions: { show: { channelMode: ['specific'] } },
-		typeOptions: {
-			loadOptionsMethod: 'getChannels',
-		},
+		displayOptions: whenSendMessage({ channelMode: ['specific'] }),
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		default: '',
 		required: true,
 	},
@@ -91,7 +172,7 @@ export const sendMessageFields: INodeProperties[] = [
 		displayName: 'WhatsApp Message Type',
 		name: 'messageType',
 		type: 'options',
-		displayOptions: { show: { channelMode: ['specific'] } },
+		displayOptions: whenSendMessage({ channelMode: ['specific'] }),
 		options: [
 			{ name: 'Template', value: 'template' },
 			{ name: 'Text', value: 'text' },
@@ -101,15 +182,15 @@ export const sendMessageFields: INodeProperties[] = [
 			{ name: 'Audio', value: 'audio' },
 		],
 		default: 'text',
-		description: WINDOW_CHECK_HELP,
 	},
 	{
 		displayName: 'Template Name or ID',
 		name: 'templateId',
 		type: 'options',
-		displayOptions: {
-			show: { channelMode: ['specific'], messageType: ['template'] },
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['template'],
+		}),
 		typeOptions: {
 			loadOptionsDependsOn: ['channelId'],
 			loadOptionsMethod: 'getTemplates',
@@ -122,9 +203,10 @@ export const sendMessageFields: INodeProperties[] = [
 		name: 'templateVariables',
 		type: 'fixedCollection',
 		typeOptions: { multipleValues: true },
-		displayOptions: {
-			show: { channelMode: ['specific'], messageType: ['template'] },
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['template'],
+		}),
 		default: {},
 		options: [
 			{
@@ -142,83 +224,44 @@ export const sendMessageFields: INodeProperties[] = [
 		name: 'specificText',
 		type: 'string',
 		typeOptions: { rows: 4 },
-		displayOptions: {
-			show: { channelMode: ['specific'], messageType: ['text'] },
-		},
-		default: '',
-		required: true,
-		description: WINDOW_CHECK_HELP,
-	},
-	{
-		displayName: 'Attachment URL',
-		name: 'mediaUrl',
-		type: 'string',
-		displayOptions: {
-			show: {
-				'/channelMode': ['last_interacted', 'specific'],
-				'/contentMode': ['attachment'],
-			},
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['text'],
+		}),
 		default: '',
 		required: true,
 	},
 	{
-		displayName: 'Attachment URL',
+		displayName: 'Media URL',
 		name: 'specificMediaUrl',
 		type: 'string',
-		displayOptions: {
-			show: {
-				channelMode: ['specific'],
-				messageType: ['image', 'video', 'audio', 'document'],
-			},
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['image', 'video', 'audio', 'document'],
+		}),
 		default: '',
 		required: true,
-		description: WINDOW_CHECK_HELP,
-	},
-	{
-		displayName: 'Caption',
-		name: 'caption',
-		type: 'string',
-		displayOptions: {
-			show: {
-				'/contentMode': ['attachment'],
-				'/attachmentType': ['image', 'video', 'document'],
-			},
-		},
-		default: '',
 	},
 	{
 		displayName: 'Caption',
 		name: 'specificCaption',
 		type: 'string',
-		displayOptions: {
-			show: {
-				channelMode: ['specific'],
-				messageType: ['image', 'video', 'document'],
-			},
-		},
-		default: '',
-	},
-	{
-		displayName: 'File Name',
-		name: 'filename',
-		type: 'string',
-		displayOptions: {
-			show: {
-				'/attachmentType': ['document'],
-				'/contentMode': ['attachment'],
-			},
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['image', 'video', 'document'],
+		}),
 		default: '',
 	},
 	{
 		displayName: 'File Name',
 		name: 'specificFilename',
 		type: 'string',
-		displayOptions: {
-			show: { channelMode: ['specific'], messageType: ['document'] },
-		},
+		displayOptions: whenSendMessage({
+			channelMode: ['specific'],
+			messageType: ['document'],
+		}),
 		default: '',
+		description: 'e.g. invoice.pdf',
 	},
+	...contactFields,
 ];

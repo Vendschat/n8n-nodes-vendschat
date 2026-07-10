@@ -1,7 +1,7 @@
 {
 	"name": "n8n-nodes-vendschat",
 	"version": "1.0.0",
-	"description": "VendsChat for n8n: unified New Message (webhook) + Send Message (platform dropdown, text/media/location/templates), API key auth — Zapier/Make style, extensible to future channels.",
+	"description": "Vendschat for n8n: webhook trigger and send message action for WhatsApp, Instagram, and Messenger via the Vendschat integrations API.",
 	"license": "MIT",
 	"keywords": [
 		"n8n-community-node-package",
@@ -11,7 +11,7 @@
 		"messenger",
 		"messaging"
 	],
-	"author": "VendsChat",
+	"author": "Vendschat",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/vendschat/n8n-nodes-vendschat.git"
@@ -36,8 +36,8 @@
 			"dist/credentials/VendsChatApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/VendsChatNewMessage/VendsChatNewMessageTrigger.node.js",
-			"dist/nodes/VendsChatSendMessage/VendsChatSendMessage.node.js"
+			"dist/nodes/VendsChat/VendsChatTrigger.node.js",
+			"dist/nodes/VendsChat/VendsChat.node.js"
 		]
 	},
 	"peerDependencies": {

@@ -1,6 +1,6 @@
-const { VendsChatNewMessageTrigger } = require('./dist/nodes/VendsChatNewMessage/VendsChatNewMessageTrigger.node');
-const { VendsChatSendMessage } = require('./dist/nodes/VendsChatSendMessage/VendsChatSendMessage.node');
+const { VendsChatTrigger } = require('./dist/nodes/VendsChat/VendsChatTrigger.node');
+const { VendsChat } = require('./dist/nodes/VendsChat/VendsChat.node');
 
 module.exports = {
-	nodes: [VendsChatNewMessageTrigger, VendsChatSendMessage],
+	nodes: [VendsChatTrigger, VendsChat],
 };

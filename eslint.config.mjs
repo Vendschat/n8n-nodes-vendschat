@@ -62,11 +62,4 @@ export default defineConfig(
 		...config,
 		files: ['nodes/**/*.ts'],
 	})),
-	{
-		files: ['nodes/VendsChatNewMessage/VendsChatNewMessageTrigger.node.ts'],
-		rules: {
-			// Product uses the same "VendsChat: …" pattern as Send Message; no "Trigger" suffix
-			'n8n-nodes-base/node-class-description-display-name-unsuffixed-trigger-node': 'off',
-		},
-	},
 );
