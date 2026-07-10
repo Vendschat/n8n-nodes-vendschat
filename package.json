@@ -1,0 +1,60 @@
+{
+	"name": "n8n-nodes-vendschat",
+	"version": "1.0.0",
+	"description": "VendsChat for n8n: unified New Message (webhook) + Send Message (platform dropdown, text/media/location/templates), API key auth — Zapier/Make style, extensible to future channels.",
+	"license": "MIT",
+	"keywords": [
+		"n8n-community-node-package",
+		"vendschat",
+		"whatsapp",
+		"instagram",
+		"messenger",
+		"messaging"
+	],
+	"author": "VendsChat",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vendschat/n8n-nodes-vendschat.git"
+	},
+	"main": "index.js",
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">=24.0.0"
+	},
+	"scripts": {
+		"build": "tsc && node scripts/copy-assets.cjs",
+		"dev": "tsc --watch",
+		"lint": "eslint .",
+		"prepack": "npm run build"
+	},
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/VendsChatApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/VendsChatNewMessage/VendsChatNewMessageTrigger.node.js",
+			"dist/nodes/VendsChatSendMessage/VendsChatSendMessage.node.js"
+		]
+	},
+	"peerDependencies": {
+		"n8n-workflow": ">=1.82.0 <3.0.0"
+	},
+	"overrides": {
+		"uuid": "14.0.0"
+	},
+	"devDependencies": {
+		"@eslint/eslintrc": "^3.3.5",
+		"@eslint/js": "^9.39.4",
+		"@eslint/json": "^1.2.0",
+		"@types/node": "^24.0.0",
+		"eslint": "^9.39.0",
+		"eslint-plugin-n8n-nodes-base": "^1.16.6",
+		"n8n-workflow": "^2.18.2",
+		"typescript": "^5.9.0",
+		"typescript-eslint": "^8.59.0"
+	}
+}

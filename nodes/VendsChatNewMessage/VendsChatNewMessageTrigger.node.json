@@ -1,0 +1,21 @@
+{
+	"node": "n8n-nodes-vendschat",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Core Nodes", "Communication"],
+	"subcategories": {
+		"Core Nodes": ["Helpers"]
+	},
+	"resources": {
+		"credentialDocumentation": [
+			{
+				"url": "https://docs.vendschat.com/docs/auth"
+			}
+		],
+		"primaryDocumentation": [
+			{
+				"url": "https://docs.vendschat.com"
+			}
+		]
+	}
+}
