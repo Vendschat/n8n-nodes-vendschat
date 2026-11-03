@@ -1,11 +1,15 @@
-import type { IDataObject, IHttpRequestMethods } from 'n8n-workflow';
+import type {
+	IDataObject,
+	IHttpRequestMethods,
+	IHttpRequestOptions,
+} from 'n8n-workflow';
 import type { VendsChatCredentials } from './http';
 import { getVendsChatAuthHeaders, normalizeBaseUrl } from './http';
 
 export async function vendsChatIntegrationRequest(
 	ctx: {
 		helpers: {
-			request: (opts: IDataObject) => Promise<unknown>;
+			httpRequest: (opts: IHttpRequestOptions) => Promise<unknown>;
 		};
 	},
 	cred: VendsChatCredentials,
@@ -14,7 +18,7 @@ export async function vendsChatIntegrationRequest(
 	body?: IDataObject,
 ): Promise<IDataObject> {
 	const baseUrl = normalizeBaseUrl(cred.baseUrl);
-	return (await ctx.helpers.request({
+	return (await ctx.helpers.httpRequest({
 		method,
 		url: `${baseUrl}${path}`,
 		headers: getVendsChatAuthHeaders(cred),

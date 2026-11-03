@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-vendschat",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "Vendschat for n8n: webhook trigger and send message action for WhatsApp, Instagram, and Messenger via the Vendschat integrations API.",
 	"license": "MIT",
 	"keywords": [
@@ -46,10 +46,7 @@
 		]
 	},
 	"peerDependencies": {
-		"n8n-workflow": ">=1.82.0 <3.0.0"
-	},
-	"overrides": {
-		"uuid": "14.0.0"
+		"n8n-workflow": "*"
 	},
 	"devDependencies": {
 		"@eslint/eslintrc": "^3.3.5",

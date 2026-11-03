@@ -6,7 +6,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import type { VendsChatCredentials } from '../../lib/http';
 import { vendsChatIntegrationRequest } from '../../lib/integrationApi';
 import {
@@ -161,14 +161,14 @@ export class VendsChat implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: displayNameAction,
 		name: 'vendsChat',
-		icon: 'file:vendschat.svg',
+		icon: { light: 'file:vendschat.svg', dark: 'file:vendschat.dark.svg' },
 		group: ['input'],
 		version: 1,
 		subtitle: subtitleAction,
 		description: descriptionAction,
 		defaults: { name: 'Vendschat' },
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		credentials: [{ name: 'vendsChatApi', required: true }],
 		properties: sendMessageFields,

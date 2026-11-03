@@ -62,4 +62,12 @@ export default defineConfig(
 		...config,
 		files: ['nodes/**/*.ts'],
 	})),
+	{
+		files: ['nodes/**/*.ts'],
+		rules: {
+			// Prefer NodeConnectionTypes.Main for @n8n/scan-community-package
+			'n8n-nodes-base/node-class-description-inputs-wrong-regular-node': 'off',
+			'n8n-nodes-base/node-class-description-outputs-wrong': 'off',
+		},
+	},
 );

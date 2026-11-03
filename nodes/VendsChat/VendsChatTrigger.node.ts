@@ -7,7 +7,7 @@ import type {
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { WEBHOOK_EVENT_OPTIONS } from '../../lib/events';
 import type { VendsChatCredentials } from '../../lib/http';
 import { getVendsChatAuthHeaders, normalizeBaseUrl } from '../../lib/http';
@@ -34,71 +34,18 @@ function getHeader(
 	return undefined;
 }
 
-async function registerWebhook(this: IHookFunctions): Promise<boolean> {
-	const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
-	const baseUrl = normalizeBaseUrl(cred.baseUrl);
-	const webhookUrl = this.getNodeWebhookUrl('default');
-	const events = this.getNodeParameter('events', 0) as string[];
-
-	const response = (await this.helpers.request({
-		method: 'POST',
-		url: `${baseUrl}/integrations/webhooks/subscribe`,
-		headers: getVendsChatAuthHeaders(cred),
-		body: {
-			url: webhookUrl,
-			events,
-			source: 'n8n',
-			name: `n8n: ${events.join(', ')}`,
-		},
-		json: true,
-	})) as IDataObject;
-
-	const subscriptionId = response.id;
-	if (subscriptionId === undefined || subscriptionId === null) {
-		throw new NodeOperationError(
-			this.getNode(),
-			'Vendschat did not return a webhook subscription id',
-		);
-	}
-
-	const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
-	staticData.subscriptionId = String(subscriptionId);
-	return true;
-}
-
-async function unregisterWebhook(this: IHookFunctions): Promise<boolean> {
-	const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
-	const baseUrl = normalizeBaseUrl(cred.baseUrl);
-	const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
-	const subscriptionId = staticData.subscriptionId;
-
-	if (!subscriptionId) {
-		return true;
-	}
-
-	await this.helpers.request({
-		method: 'DELETE',
-		url: `${baseUrl}/integrations/webhooks/${subscriptionId}`,
-		headers: getVendsChatAuthHeaders(cred),
-		json: true,
-	});
-
-	delete staticData.subscriptionId;
-	return true;
-}
-
 export class VendsChatTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: displayNameTrigger,
 		name: 'vendsChatTrigger',
-		icon: 'file:vendschat.svg',
+		icon: { light: 'file:vendschat.svg', dark: 'file:vendschat.dark.svg' },
 		group: ['trigger'],
 		version: 1,
 		subtitle: subtitleTrigger,
 		description: descriptionTrigger,
 		defaults: { name: displayNameTrigger },
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'vendsChatApi', required: true }],
 		webhooks: [
 			{
@@ -111,17 +58,14 @@ export class VendsChatTrigger implements INodeType {
 		],
 		properties: [
 			{
-				// "Events" displayName is required for n8n to group trigger under the Vendschat app tile.
-				// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-multi-options
-				displayName: 'Events',
+				displayName: 'Event Names or IDs',
 				name: 'events',
 				type: 'multiOptions',
 				typeOptions: { loadOptionsMethod: 'getEvents' },
 				default: ['incoming.vendschat.messages'],
 				required: true,
-				// eslint-disable-next-line n8n-nodes-base/node-param-description-wrong-for-dynamic-multi-options
 				description:
-					'Select one or more events. Vendschat will POST matching payloads when the workflow is active.',
+					'Choose from the list, or specify IDs using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 			},
 		],
 		codex: vendsChatCodex,
@@ -163,8 +107,57 @@ export class VendsChatTrigger implements INodeType {
 				const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
 				return Boolean(staticData.subscriptionId);
 			},
-			create: registerWebhook,
-			delete: unregisterWebhook,
+			async create(this: IHookFunctions): Promise<boolean> {
+				const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
+				const baseUrl = normalizeBaseUrl(cred.baseUrl);
+				const webhookUrl = this.getNodeWebhookUrl('default');
+				const events = this.getNodeParameter('events', 0) as string[];
+
+				const response = (await this.helpers.httpRequest({
+					method: 'POST',
+					url: `${baseUrl}/integrations/webhooks/subscribe`,
+					headers: getVendsChatAuthHeaders(cred),
+					body: {
+						url: webhookUrl,
+						events,
+						source: 'n8n',
+						name: `n8n: ${events.join(', ')}`,
+					},
+					json: true,
+				})) as IDataObject;
+
+				const subscriptionId = response.id;
+				if (subscriptionId === undefined || subscriptionId === null) {
+					throw new NodeOperationError(
+						this.getNode(),
+						'Vendschat did not return a webhook subscription id',
+					);
+				}
+
+				const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
+				staticData.subscriptionId = String(subscriptionId);
+				return true;
+			},
+			async delete(this: IHookFunctions): Promise<boolean> {
+				const cred = (await this.getCredentials('vendsChatApi')) as VendsChatCredentials;
+				const baseUrl = normalizeBaseUrl(cred.baseUrl);
+				const staticData = this.getWorkflowStaticData('node') as SubscriptionStaticData;
+				const subscriptionId = staticData.subscriptionId;
+
+				if (!subscriptionId) {
+					return true;
+				}
+
+				await this.helpers.httpRequest({
+					method: 'DELETE',
+					url: `${baseUrl}/integrations/webhooks/${subscriptionId}`,
+					headers: getVendsChatAuthHeaders(cred),
+					json: true,
+				});
+
+				delete staticData.subscriptionId;
+				return true;
+			},
 		},
 	};
 
