@@ -1,30 +1,35 @@
-import type {
-	IDataObject,
-	IHttpRequestMethods,
-	IHttpRequestOptions,
-} from 'n8n-workflow';
+import type { IDataObject, IHttpRequestMethods } from 'n8n-workflow';
 import type { VendsChatCredentials } from './http';
-import { getVendsChatAuthHeaders, normalizeBaseUrl } from './http';
+import { normalizeBaseUrl } from './http';
+
+/** Minimal helper surface shared by execute / loadOptions / hook contexts. */
+type RequestContext = {
+	helpers: {
+		// n8n helper this-typing differs across context interfaces; keep loose.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		httpRequestWithAuthentication: (...args: any[]) => Promise<any>;
+	};
+};
 
 export async function vendsChatIntegrationRequest(
-	ctx: {
-		helpers: {
-			httpRequest: (opts: IHttpRequestOptions) => Promise<unknown>;
-		};
-	},
+	ctx: RequestContext,
 	cred: VendsChatCredentials,
 	path: string,
 	method: IHttpRequestMethods = 'GET',
 	body?: IDataObject,
 ): Promise<IDataObject> {
 	const baseUrl = normalizeBaseUrl(cred.baseUrl);
-	return (await ctx.helpers.httpRequest({
-		method,
-		url: `${baseUrl}${path}`,
-		headers: getVendsChatAuthHeaders(cred),
-		body,
-		json: true,
-	})) as IDataObject;
+	return (await ctx.helpers.httpRequestWithAuthentication.call(
+		ctx,
+		'vendsChatApi',
+		{
+			method,
+			url: `${baseUrl}${path}`,
+			headers: { 'Content-Type': 'application/json' },
+			body,
+			json: true,
+		},
+	)) as IDataObject;
 }
 
 export const WINDOW_CHECK_HELP =

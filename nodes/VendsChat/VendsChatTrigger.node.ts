@@ -10,7 +10,7 @@ import type {
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 import { WEBHOOK_EVENT_OPTIONS } from '../../lib/events';
 import type { VendsChatCredentials } from '../../lib/http';
-import { getVendsChatAuthHeaders, normalizeBaseUrl } from '../../lib/http';
+import { normalizeBaseUrl } from '../../lib/http';
 import { vendsChatIntegrationRequest } from '../../lib/integrationApi';
 import {
 	descriptionTrigger,
@@ -113,18 +113,22 @@ export class VendsChatTrigger implements INodeType {
 				const webhookUrl = this.getNodeWebhookUrl('default');
 				const events = this.getNodeParameter('events', 0) as string[];
 
-				const response = (await this.helpers.httpRequest({
-					method: 'POST',
-					url: `${baseUrl}/integrations/webhooks/subscribe`,
-					headers: getVendsChatAuthHeaders(cred),
-					body: {
-						url: webhookUrl,
-						events,
-						source: 'n8n',
-						name: `n8n: ${events.join(', ')}`,
+				const response = (await this.helpers.httpRequestWithAuthentication.call(
+					this,
+					'vendsChatApi',
+					{
+						method: 'POST',
+						url: `${baseUrl}/integrations/webhooks/subscribe`,
+						headers: { 'Content-Type': 'application/json' },
+						body: {
+							url: webhookUrl,
+							events,
+							source: 'n8n',
+							name: `n8n: ${events.join(', ')}`,
+						},
+						json: true,
 					},
-					json: true,
-				})) as IDataObject;
+				)) as IDataObject;
 
 				const subscriptionId = response.id;
 				if (subscriptionId === undefined || subscriptionId === null) {
@@ -148,10 +152,9 @@ export class VendsChatTrigger implements INodeType {
 					return true;
 				}
 
-				await this.helpers.httpRequest({
+				await this.helpers.httpRequestWithAuthentication.call(this, 'vendsChatApi', {
 					method: 'DELETE',
 					url: `${baseUrl}/integrations/webhooks/${subscriptionId}`,
-					headers: getVendsChatAuthHeaders(cred),
 					json: true,
 				});
 

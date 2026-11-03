@@ -1,4 +1,9 @@
-import type { ICredentialTestRequest, ICredentialType, INodeProperties } from 'n8n-workflow';
+import type {
+	IAuthenticateGeneric,
+	ICredentialTestRequest,
+	ICredentialType,
+	INodeProperties,
+} from 'n8n-workflow';
 
 const DEFAULT_BASE = 'https://api.vendschat.com/v1';
 
@@ -7,6 +12,19 @@ export class VendsChatApi implements ICredentialType {
 	displayName = 'Vendschat API';
 	icon = 'file:vendschat.svg' as const;
 	documentationUrl = 'https://docs.vendschat.com/docs/auth';
+
+	authenticate: IAuthenticateGeneric = {
+		type: 'generic',
+		properties: {
+			headers: {
+				Authorization:
+					'={{$credentials.authType === "xApiKey" ? undefined : "Bearer " + $credentials.apiKey}}',
+				'x-api-key':
+					'={{$credentials.authType === "xApiKey" ? $credentials.apiKey : undefined}}',
+			},
+		},
+	};
+
 	properties: INodeProperties[] = [
 		{
 			displayName: 'Base URL',
