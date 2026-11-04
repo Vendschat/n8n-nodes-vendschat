@@ -22,5 +22,8 @@
 		"credentials/**/*.ts",
 		"nodes/**/*.ts",
 		"lib/**/*.ts"
+	],
+	"exclude": [
+		"**/*.test.ts"
 	]
 }

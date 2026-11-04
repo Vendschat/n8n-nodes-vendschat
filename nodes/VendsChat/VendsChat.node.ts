@@ -15,46 +15,8 @@ import {
 	subtitleAction,
 } from '../../lib/productCopy';
 import { sendMessageFields } from '../../lib/sendMessageFields';
+import { buildSendMessagePayload } from '../../lib/sendMessagePayload';
 import { vendsChatCodex } from '../../lib/vendsChatCodex';
-
-function buildSendMessagePayload(item: IDataObject): IDataObject {
-	const templateVars: Record<string, string> = {};
-	const rawVars = item.templateVariables as { variable?: Array<{ key: string; value: string }> };
-	for (const row of rawVars?.variable ?? []) {
-		if (row.key) templateVars[row.key] = row.value;
-	}
-
-	const channelMode = item.channelMode as string;
-
-	return {
-		identifier_type: item.identifierType,
-		identifier_value: item.identifierValue,
-		channel_mode: channelMode,
-		channel_id: item.channelId ? Number(item.channelId) : undefined,
-		content_mode: item.contentMode,
-		message_type: item.messageType,
-		attachment_type: item.attachmentType,
-		text:
-			channelMode === 'specific'
-				? (item.specificText as string) || undefined
-				: (item.text as string) || undefined,
-		media_url:
-			channelMode === 'specific'
-				? (item.specificMediaUrl as string) || undefined
-				: (item.mediaUrl as string) || undefined,
-		caption:
-			channelMode === 'specific'
-				? (item.specificCaption as string) || undefined
-				: (item.caption as string) || undefined,
-		filename:
-			channelMode === 'specific'
-				? (item.specificFilename as string) || undefined
-				: (item.filename as string) || undefined,
-		template_id: item.templateId ? Number(item.templateId) : undefined,
-		template_variables:
-			Object.keys(templateVars).length > 0 ? templateVars : undefined,
-	};
-}
 
 function parseLabelIds(raw: unknown): number[] {
 	if (raw == null || raw === '') return [];
@@ -223,13 +185,15 @@ export class VendsChat implements INodeType {
 				let response: IDataObject;
 
 				if (operation === 'sendMessage') {
+					// Hidden fields (displayOptions) must use defaults — n8n throws
+					// "Could not get parameter X" when the UI field is not shown.
 					const payload = buildSendMessagePayload({
 						identifierType: this.getNodeParameter('identifierType', i),
 						identifierValue: this.getNodeParameter('identifierValue', i),
-						channelMode: this.getNodeParameter('channelMode', i),
-						contentMode: this.getNodeParameter('contentMode', i),
-						text: this.getNodeParameter('text', i),
-						attachmentType: this.getNodeParameter('attachmentType', i),
+						channelMode: this.getNodeParameter('channelMode', i, 'last_interacted'),
+						contentMode: this.getNodeParameter('contentMode', i, 'text'),
+						text: this.getNodeParameter('text', i, ''),
+						attachmentType: this.getNodeParameter('attachmentType', i, ''),
 						channelId: this.getNodeParameter('channelId', i, ''),
 						messageType: this.getNodeParameter('messageType', i, ''),
 						templateId: this.getNodeParameter('templateId', i, ''),
