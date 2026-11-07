@@ -44,13 +44,6 @@ export const sendMessageFields: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: WINDOW_NOTICE,
-		name: 'windowNotice',
-		type: 'notice',
-		default: '',
-		displayOptions: whenSendMessage({}),
-	},
-	{
 		displayName: 'Identifier Type',
 		name: 'identifierType',
 		type: 'options',
@@ -82,6 +75,7 @@ export const sendMessageFields: INodeProperties[] = [
 		],
 		default: 'last_interacted',
 		required: true,
+		description: WINDOW_NOTICE,
 		displayOptions: whenSendMessage({}),
 	},
 	{
@@ -137,27 +131,36 @@ export const sendMessageFields: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Caption',
-		name: 'caption',
-		type: 'string',
+		displayName: 'Options',
+		name: 'options',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
 		displayOptions: whenSendMessage({
 			channelMode: ['last_interacted'],
 			contentMode: ['attachment'],
 			attachmentType: ['image', 'video', 'document'],
 		}),
-		default: '',
-	},
-	{
-		displayName: 'File Name',
-		name: 'filename',
-		type: 'string',
-		displayOptions: whenSendMessage({
-			channelMode: ['last_interacted'],
-			contentMode: ['attachment'],
-			attachmentType: ['document'],
-		}),
-		default: '',
-		description: 'e.g. invoice.pdf',
+		options: [
+			{
+				displayName: 'Caption',
+				name: 'caption',
+				type: 'string',
+				default: '',
+			},
+			{
+				displayName: 'File Name',
+				name: 'filename',
+				type: 'string',
+				default: '',
+				description: 'e.g. invoice.pdf',
+				displayOptions: {
+					show: {
+						'/attachmentType': ['document'],
+					},
+				},
+			},
+		],
 	},
 	{
 		displayName: 'Channel Name or ID',
@@ -243,25 +246,36 @@ export const sendMessageFields: INodeProperties[] = [
 		required: true,
 	},
 	{
-		displayName: 'Caption',
-		name: 'specificCaption',
-		type: 'string',
+		displayName: 'Options',
+		name: 'specificOptions',
+		type: 'collection',
+		placeholder: 'Add Option',
+		default: {},
 		displayOptions: whenSendMessage({
 			channelMode: ['specific'],
 			messageType: ['image', 'video', 'document'],
 		}),
-		default: '',
-	},
-	{
-		displayName: 'File Name',
-		name: 'specificFilename',
-		type: 'string',
-		displayOptions: whenSendMessage({
-			channelMode: ['specific'],
-			messageType: ['document'],
-		}),
-		default: '',
-		description: 'e.g. invoice.pdf',
+		options: [
+			{
+				displayName: 'Caption',
+				name: 'caption',
+				type: 'string',
+				default: '',
+			},
+			{
+				displayName: 'File Name',
+				name: 'filename',
+				type: 'string',
+				default: '',
+				description: 'e.g. invoice.pdf',
+				displayOptions: {
+					show: {
+						'/messageType': ['document'],
+					},
+				},
+			},
+		],
 	},
 	...contactFields,
 ];
+
