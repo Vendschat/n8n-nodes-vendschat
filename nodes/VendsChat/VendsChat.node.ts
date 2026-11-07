@@ -54,26 +54,28 @@ async function executeContactOperation(
 	}
 
 	if (operation === 'createContact') {
+		const additionalFields = ctx.getNodeParameter('additionalFields', itemIndex, {}) as IDataObject;
 		return vendsChatIntegrationRequest(ctx, cred, '/integrations/contacts', 'POST', {
-			name: optionalString(ctx.getNodeParameter('name', itemIndex, '')),
+			name: optionalString(additionalFields.name),
 			phone_number: optionalString(ctx.getNodeParameter('phoneNumber', itemIndex, '')),
 			email: optionalString(ctx.getNodeParameter('email', itemIndex, '')),
-			note: optionalString(ctx.getNodeParameter('note', itemIndex, '')),
-			country: optionalString(ctx.getNodeParameter('country', itemIndex, '')),
-			language: optionalString(ctx.getNodeParameter('language', itemIndex, '')),
+			note: optionalString(additionalFields.note),
+			country: optionalString(additionalFields.country),
+			language: optionalString(additionalFields.language),
 		});
 	}
 
 	if (operation === 'updateContact') {
+		const updateFields = ctx.getNodeParameter('updateFields', itemIndex, {}) as IDataObject;
 		return vendsChatIntegrationRequest(ctx, cred, '/integrations/contacts', 'PATCH', {
 			identifier_type: identifierType,
 			identifier_value: identifierValue,
-			name: optionalString(ctx.getNodeParameter('name', itemIndex, '')),
-			phone_number: optionalString(ctx.getNodeParameter('updatePhoneNumber', itemIndex, '')),
-			email: optionalString(ctx.getNodeParameter('updateEmail', itemIndex, '')),
-			note: optionalString(ctx.getNodeParameter('note', itemIndex, '')),
-			country: optionalString(ctx.getNodeParameter('country', itemIndex, '')),
-			language: optionalString(ctx.getNodeParameter('language', itemIndex, '')),
+			name: optionalString(updateFields.name),
+			phone_number: optionalString(updateFields.phoneNumber),
+			email: optionalString(updateFields.email),
+			note: optionalString(updateFields.note),
+			country: optionalString(updateFields.country),
+			language: optionalString(updateFields.language),
 		});
 	}
 
@@ -187,6 +189,8 @@ export class VendsChat implements INodeType {
 				if (operation === 'sendMessage') {
 					// Hidden fields (displayOptions) must use defaults — n8n throws
 					// "Could not get parameter X" when the UI field is not shown.
+					const options = this.getNodeParameter('options', i, {}) as IDataObject;
+					const specificOptions = this.getNodeParameter('specificOptions', i, {}) as IDataObject;
 					const payload = buildSendMessagePayload({
 						identifierType: this.getNodeParameter('identifierType', i),
 						identifierValue: this.getNodeParameter('identifierValue', i),
@@ -201,10 +205,10 @@ export class VendsChat implements INodeType {
 						specificText: this.getNodeParameter('specificText', i, ''),
 						mediaUrl: this.getNodeParameter('mediaUrl', i, ''),
 						specificMediaUrl: this.getNodeParameter('specificMediaUrl', i, ''),
-						caption: this.getNodeParameter('caption', i, ''),
-						specificCaption: this.getNodeParameter('specificCaption', i, ''),
-						filename: this.getNodeParameter('filename', i, ''),
-						specificFilename: this.getNodeParameter('specificFilename', i, ''),
+						caption: options.caption ?? '',
+						specificCaption: specificOptions.caption ?? '',
+						filename: options.filename ?? '',
+						specificFilename: specificOptions.filename ?? '',
 					});
 
 					response = await vendsChatIntegrationRequest(

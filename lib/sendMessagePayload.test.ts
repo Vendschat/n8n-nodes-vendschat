@@ -33,6 +33,37 @@ describe('buildSendMessagePayload', () => {
 		assert.equal(payload.text, undefined);
 	});
 
+	it('maps Options collection caption and filename for attachments', () => {
+		const payload = buildSendMessagePayload({
+			identifierType: 'contact_id',
+			identifierValue: '42',
+			channelMode: 'last_interacted',
+			contentMode: 'attachment',
+			attachmentType: 'document',
+			mediaUrl: 'https://example.com/a.pdf',
+			caption: 'Invoice',
+			filename: 'invoice.pdf',
+		});
+		assert.equal(payload.caption, 'Invoice');
+		assert.equal(payload.filename, 'invoice.pdf');
+	});
+
+	it('maps specific Options collection caption and filename', () => {
+		const payload = buildSendMessagePayload({
+			identifierType: 'contact_id',
+			identifierValue: '42',
+			channelMode: 'specific',
+			channelId: '9',
+			messageType: 'document',
+			specificMediaUrl: 'https://example.com/a.pdf',
+			specificCaption: 'Invoice',
+			specificFilename: 'invoice.pdf',
+		});
+		assert.equal(payload.caption, 'Invoice');
+		assert.equal(payload.filename, 'invoice.pdf');
+	});
+
+
 	it('uses specific channel fields and defaults message_type to text', () => {
 		const payload = buildSendMessagePayload({
 			identifierType: 'contact_id',

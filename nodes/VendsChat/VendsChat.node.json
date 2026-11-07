@@ -3,7 +3,7 @@
 	"nodeVersion": "1.0",
 	"codexVersion": "1.0",
 	"categories": ["Communication"],
-	"alias": ["Vendschat", "vendschat", "whatsapp", "instagram", "messenger"],
+	"alias": ["Vendschat", "vendschat"],
 	"resources": {
 		"credentialDocumentation": [
 			{
