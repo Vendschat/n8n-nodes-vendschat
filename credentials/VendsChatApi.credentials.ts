@@ -59,7 +59,7 @@ export class VendsChatApi implements ICredentialType {
 			typeOptions: { password: true },
 			default: '',
 			description:
-				'If set, incoming webhooks must send the same value in the X-VendsChat-Webhook-Secret header (recommended for New Message trigger).',
+				'Leave blank for normal Vendschat Trigger deliveries. Only set this if the sender includes the same value in the X-VendsChat-Webhook-Secret header.',
 		},
 	];
 
