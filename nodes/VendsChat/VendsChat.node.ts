@@ -186,7 +186,7 @@ export class VendsChat implements INodeType {
 			try {
 				let response: IDataObject;
 
-				if (operation === 'sendMessage') {
+				if (operation === 'sendMessage' || operation === 'scheduleMessage') {
 					// Hidden fields (displayOptions) must use defaults — n8n throws
 					// "Could not get parameter X" when the UI field is not shown.
 					const options = this.getNodeParameter('options', i, {}) as IDataObject;
@@ -211,13 +211,48 @@ export class VendsChat implements INodeType {
 						specificFilename: specificOptions.filename ?? '',
 					});
 
-					response = await vendsChatIntegrationRequest(
-						this,
-						cred,
-						'/integrations/messages/send',
-						'POST',
-						payload,
-					);
+					if (operation === 'scheduleMessage') {
+						const scheduleType = this.getNodeParameter('scheduleType', i, 'relative') as string;
+						const noReply = String(this.getNodeParameter('noReply', i, '') ?? '');
+						const labelOp = String(this.getNodeParameter('labelOp', i, '') ?? '');
+						const labelNames = String(this.getNodeParameter('scheduleLabelNames', i, '') ?? '');
+						const schedule =
+							scheduleType === 'specific'
+								? {
+										type: 'specific',
+										wall_clock: this.getNodeParameter('wallClock', i, ''),
+										timezone: this.getNodeParameter('timezone', i, ''),
+									}
+								: {
+										type: 'relative',
+										unit: this.getNodeParameter('scheduleUnit', i, 'hours'),
+										amount: Number(this.getNodeParameter('scheduleAmount', i, 2)),
+									};
+						const sendIf: IDataObject = {};
+						if (noReply) sendIf.no_reply = noReply;
+						if (labelOp && labelNames.trim()) {
+							sendIf.labels = { [labelOp]: labelNames };
+						}
+						response = await vendsChatIntegrationRequest(
+							this,
+							cred,
+							'/integrations/messages/schedule',
+							'POST',
+							{
+								...payload,
+								schedule,
+								...(Object.keys(sendIf).length > 0 ? { send_if: sendIf } : {}),
+							},
+						);
+					} else {
+						response = await vendsChatIntegrationRequest(
+							this,
+							cred,
+							'/integrations/messages/send',
+							'POST',
+							payload,
+						);
+					}
 				} else {
 					response = await executeContactOperation(this, cred, operation, i);
 				}

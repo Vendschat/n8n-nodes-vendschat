@@ -8,10 +8,12 @@ import {
 const WINDOW_NOTICE =
 	'Session messages on WhatsApp, Messenger, and Instagram only work inside the 24-hour customer service window. Use a WhatsApp Template outside the window.';
 
+const MESSAGE_OPERATIONS = ['sendMessage', 'scheduleMessage'];
+
 function whenSendMessage(
 	show: Record<string, (string | number | boolean)[]>,
 ): INodeProperties['displayOptions'] {
-	return { show: { operation: ['sendMessage'], ...show } };
+	return { show: { operation: MESSAGE_OPERATIONS, ...show } };
 }
 
 function whenIdentifier(
@@ -19,7 +21,7 @@ function whenIdentifier(
 ): INodeProperties['displayOptions'] {
 	return {
 		show: {
-			operation: ['sendMessage', ...contactIdentifierOperations],
+			operation: ['sendMessage', 'scheduleMessage', ...contactIdentifierOperations],
 			...show,
 		},
 	};
@@ -37,6 +39,12 @@ export const sendMessageFields: INodeProperties[] = [
 				value: 'sendMessage',
 				description: 'Send a WhatsApp, Instagram, or Messenger message',
 				action: 'Send Message',
+			},
+			{
+				name: 'Schedule Message',
+				value: 'scheduleMessage',
+				description: 'Queue a WhatsApp text or template for later. A session message that fires outside the 24-hour window is suppressed.',
+				action: 'Schedule Message',
 			},
 			...contactOperationOptions,
 		],
@@ -275,6 +283,105 @@ export const sendMessageFields: INodeProperties[] = [
 				},
 			},
 		],
+	},
+	{
+		displayName: 'Schedule Type',
+		name: 'scheduleType',
+		type: 'options',
+		displayOptions: { show: { operation: ['scheduleMessage'] } },
+		options: [
+			{ name: 'Relative Delay', value: 'relative' },
+			{ name: 'Specific Time', value: 'specific' },
+		],
+		default: 'relative',
+		required: true,
+		description:
+			'A session message that fires outside the 24-hour window is suppressed. Use a template for a later follow-up.',
+	},
+	{
+		displayName: 'Unit',
+		name: 'scheduleUnit',
+		type: 'options',
+		displayOptions: { show: { operation: ['scheduleMessage'], scheduleType: ['relative'] } },
+		options: [
+			{ name: 'Minutes', value: 'minutes' },
+			{ name: 'Hours', value: 'hours' },
+			{ name: 'Days', value: 'days' },
+		],
+		default: 'hours',
+		required: true,
+	},
+	{
+		displayName: 'Amount',
+		name: 'scheduleAmount',
+		type: 'number',
+		displayOptions: { show: { operation: ['scheduleMessage'], scheduleType: ['relative'] } },
+		default: 2,
+		required: true,
+		description: 'Counted from the moment this node runs.',
+	},
+	{
+		displayName: 'Wall Clock',
+		name: 'wallClock',
+		type: 'string',
+		displayOptions: { show: { operation: ['scheduleMessage'], scheduleType: ['specific'] } },
+		default: '',
+		required: true,
+		placeholder: '2026-11-23T16:00',
+		description: 'Local date and time, without a timezone offset.',
+	},
+	{
+		displayName: 'Timezone',
+		name: 'timezone',
+		type: 'string',
+		displayOptions: { show: { operation: ['scheduleMessage'], scheduleType: ['specific'] } },
+		default: 'UTC',
+		required: true,
+		placeholder: 'Asia/Dhaka',
+		description: 'IANA timezone for the wall clock. Example: Asia/Dhaka.',
+	},
+	{
+		displayName: 'Send Only If',
+		name: 'noReply',
+		type: 'options',
+		displayOptions: { show: { operation: ['scheduleMessage'] } },
+		options: [
+			{ name: 'Send Either Way', value: '' },
+			{ name: 'No Reply Since My Last Message', value: 'since_last_message' },
+			{ name: 'Never Replied', value: 'never_replied' },
+			{ name: 'No Reply Within 20 Minutes', value: '20m' },
+			{ name: 'No Reply Within 45 Minutes', value: '45m' },
+			{ name: 'No Reply Within 3 Hours', value: '3h' },
+			{ name: 'No Reply Within 6 Hours', value: '6h' },
+			{ name: 'No Reply Within 12 Hours', value: '12h' },
+			{ name: 'No Reply Within 24 Hours', value: '24h' },
+			{ name: 'No Reply Within 48 Hours', value: '48h' },
+			{ name: 'No Reply Within 72 Hours', value: '72h' },
+		],
+		default: '',
+		description: 'Checked when the message fires, not when this node runs.',
+	},
+	{
+		displayName: 'Label Condition',
+		name: 'labelOp',
+		type: 'options',
+		displayOptions: { show: { operation: ['scheduleMessage'] } },
+		options: [
+			{ name: 'No Label Condition', value: '' },
+			{ name: 'Has Any of These Labels', value: 'include' },
+			{ name: 'Has None of These Labels', value: 'exclude' },
+		],
+		default: '',
+	},
+	{
+		displayName: 'Label Names',
+		name: 'scheduleLabelNames',
+		type: 'string',
+		displayOptions: {
+			show: { operation: ['scheduleMessage'], labelOp: ['include', 'exclude'] },
+		},
+		default: '',
+		description: 'Comma-separated label names, checked when the message fires.',
 	},
 	...contactFields,
 ];
